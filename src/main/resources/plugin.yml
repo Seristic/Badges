@@ -1,0 +1,15 @@
+name: ChatBadges
+version: '0.1'
+main: com.seristic.chatBadges.ChatBadges
+api-version: '1.21'
+prefix: Chat Badges
+depend:
+  - LuckPerms
+load: STARTUP
+authors: [ Seristic ]
+description: Allows users to have Badges in chat
+commands:
+  badge:
+    description: Opens the badge selection GUI
+    usage: /badge
+    permission: chatbadges.use
