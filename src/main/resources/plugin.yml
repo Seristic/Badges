@@ -1,0 +1,18 @@
+name: Badges
+version: '1.0'
+main: com.seristic.badges.Badges
+api-version: '1.21'
+prefix: Chat Badges
+load: STARTUP
+authors: [ Seristic ]
+description: Allows users to have Badges in chat
+commands:
+  badge:
+    description: Opens the badge GUI or shows badge info.
+    usage: /<command> <subcommand>
+    aliases: [badges]
+    subcommands:
+      delete:
+        description: Deletes a badge from a player.
+        usage: /badge delete <badgeName>
+        permission: badges.delete

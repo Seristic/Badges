@@ -1,0 +1,10 @@
+settings:
+  assign-default-badge: true
+  default-badge: "[ ✦ ]"
+
+mysql:
+  host: "localhost"
+  port: 3306
+  database: "badges"
+  username: "root"
+  password: ""

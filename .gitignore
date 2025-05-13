@@ -1,0 +1,61 @@
+# ----------------------------
+# Java & IDEs
+# ----------------------------
+*.class
+*.jar
+*.war
+*.ear
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+target/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# ----------------------------
+# Maven / Gradle
+# ----------------------------
+target/
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Distribution files
+*.jar
+*.zip
+*.tar.gz
+
+# ----------------------------
+# OS / System files
+# ----------------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+*.swp
+
+# ----------------------------
+# Logs and temp
+# ----------------------------
+*.log
+logs/
+*.tmp
+
+# ----------------------------
+# Plugin-specific
+# ----------------------------
+# Ignore your local plugin config if you run the plugin on a dev server
+plugins/ChatBadges/
+
+# ----------------------------
+# Dev server files
+# ----------------------------
+run/
