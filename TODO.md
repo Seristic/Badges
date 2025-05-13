@@ -42,6 +42,7 @@ This file contains the current development goals and improvements for the Badges
 - [ ] PlaceholderAPI support for badge display in chat/tab/scoreboard
 - [ ] Discord integration: sync badge announcements to channels (Very unlikely)
 - [ ] Badge sorting options (alphabetical, rarity, date earned)
+- [ ] Group badges with sharing and ownership features
 
 ---
 
