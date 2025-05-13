@@ -10,7 +10,6 @@
 
 - 🎨 Custom badges with colors, icons, and hoverable chat tags
 - 🧍 Player badge management GUI (`/badge`)
-- 🧑‍🤝‍🧑 Group badges with sharing and ownership features
 - 🛠️ Admin commands to create, edit, and delete badges
 - 🧾 MySQL support for persistent badge storage
 - 🔐 Permission-based access control
