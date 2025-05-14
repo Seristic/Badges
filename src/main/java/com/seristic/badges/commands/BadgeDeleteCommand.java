@@ -1,5 +1,6 @@
 package com.seristic.badges.commands;
 
+import com.seristic.badges.commands.Handler.BadgeSubCommand;
 import com.seristic.badges.gui.BadgeGUI;
 import com.seristic.badges.util.database.DatabaseManager;
 import com.seristic.badges.util.helpers.MessageUtil;
@@ -12,8 +13,10 @@ import org.bukkit.entity.Player;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 
-public class BadgeDeleteCommand {
+public class BadgeDeleteCommand extends BadgeSubCommand {
 
     private final BadgeGUI badgeGUI;
 
@@ -21,27 +24,38 @@ public class BadgeDeleteCommand {
         this.badgeGUI = badgeGUI;
     }
 
-    public void handle(CommandSender sender, String[] args) {
+    @Override
+    public String getName() {
+        return "delete";
+    }
+
+    @Override
+    public List<String> getAliases() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public String getPermission() {
+        return "badges.admin";
+    }
+
+    @Override
+    public void execute(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
             MessageUtil.send(sender, Component.text("Only players can use this command.", NamedTextColor.RED));
             return;
         }
 
-        if (!player.isOp() && !player.hasPermission("chatbadges.admin")) {
-            MessageUtil.send(sender, Component.text("You do not have permission to delete badges.", NamedTextColor.RED));
-            return;
-        }
-
-        if (args.length < 2) {
+        if (args.length < 1) {
             MessageUtil.send(sender, Component.text("Usage: /badge delete <badgeName>", NamedTextColor.RED));
             return;
         }
 
-        String badgeName = args[1];
+        String badgeName = args[0];
 
         try (Connection connection = DatabaseManager.getConnection()) {
             if (connection == null) {
-                MessageUtil.send(sender, Component.text("Database connection not available.", NamedTextColor.RED));
+                MessageUtil.send(sender, Component.text("Database unavailable.", NamedTextColor.RED));
                 return;
             }
 
@@ -51,14 +65,15 @@ public class BadgeDeleteCommand {
                 int rowsAffected = statement.executeUpdate();
 
                 if (rowsAffected > 0) {
-                    MessageUtil.send(sender, Component.text("Badge '" + badgeName + "' deleted successfully.", NamedTextColor.GREEN));
+                    MessageUtil.send(sender, Component.text("Badge '" + badgeName + "' deleted.", NamedTextColor.GREEN));
                     PluginLogger.getLogger().info("[ChatBadges] Badge '" + badgeName + "' deleted by " + player.getName());
                 } else {
                     MessageUtil.send(sender, Component.text("Badge '" + badgeName + "' not found.", NamedTextColor.RED));
                 }
             }
+
         } catch (SQLException e) {
-            MessageUtil.send(sender, Component.text("Failed to delete badge from the database.", NamedTextColor.RED));
+            MessageUtil.send(sender, Component.text("Failed to delete badge.", NamedTextColor.RED));
             e.printStackTrace();
         }
     }

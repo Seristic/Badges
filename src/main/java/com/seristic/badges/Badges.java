@@ -1,13 +1,15 @@
 package com.seristic.badges;
 
-import com.seristic.badges.commands.BadgeCommand;
+import com.seristic.badges.commands.BadgeCommandTabCompleter;
 import com.seristic.badges.commands.Handler.CommandHandler;
 import com.seristic.badges.gui.BadgeGUI;
 import com.seristic.badges.gui.BadgeManager;
 import com.seristic.badges.util.database.DatabaseManager;
 import com.seristic.badges.util.helpers.MessageUtil;
+import com.seristic.badges.util.helpers.PluginLogger;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Badges extends JavaPlugin {
@@ -22,13 +24,14 @@ public final class Badges extends JavaPlugin {
         getLogger().info(PREFIX + " has been enabled.");
 
         MessageUtil.initialize(BukkitAudiences.create(this));
+        BadgeCommandTabCompleter tabCompleter = new BadgeCommandTabCompleter();
 
         saveDefaultConfig();
 
-
-
         this.adventure = BukkitAudiences.create(this);
-        this.badgeGUI = new BadgeGUI(adventure, badgeGUI, this);
+        this.badgeGUI = new BadgeGUI(adventure, this.badgeGUI, this);
+
+        CommandHandler commandHandler = new CommandHandler(adventure, badgeGUI);
 
         String host = getConfig().getString("mysql.host");
         int port = getConfig().getInt("mysql.port");
@@ -40,7 +43,6 @@ public final class Badges extends JavaPlugin {
 
         BadgeManager.loadConfig(getConfig());
 
-        // Setup LuckPerms after tick
         Bukkit.getScheduler().runTaskLater(this, () -> {
             BadgeManager.setupLuckPerms();
             if (BadgeManager.getLuckPerms() == null) {
@@ -48,9 +50,15 @@ public final class Badges extends JavaPlugin {
             }
         }, 1L);
 
+        PluginCommand badgeCommand = getCommand("badge");
+        if (badgeCommand != null) {
+            badgeCommand.setExecutor(commandHandler);
+            badgeCommand.setTabCompleter(tabCompleter);
+        } else {
+            PluginLogger.getLogger().warning(PREFIX + "Command 'badge' not found in plugin.yml");
+        }
+
         getServer().getPluginManager().registerEvents(new BadgeGUI(adventure, badgeGUI, this), this);
-        CommandHandler commandHandler = new CommandHandler(this, adventure, badgeGUI);
-        commandHandler.registerCommands(this);
 
     }
 

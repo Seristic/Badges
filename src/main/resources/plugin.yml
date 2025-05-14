@@ -11,6 +11,8 @@ commands:
     description: Opens the badge GUI or shows badge info.
     usage: /<command> <subcommand>
     aliases: [badges]
+    permission: badges.use
+    tab-completer: com.seristic.badges.commands.BadgeCommandTabCompleter
     subcommands:
       delete:
         description: Deletes a badge from a player.

@@ -1,5 +1,6 @@
 package com.seristic.badges.gui;
 
+import com.seristic.badges.util.Badge;
 import com.seristic.badges.util.database.DatabaseManager;
 import com.seristic.badges.util.helpers.MessageUtil;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -48,6 +49,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
 
     public BadgeGUI(BukkitAudiences adventure, BadgeGUI badgeGUI, JavaPlugin plugin) {
         this.adventure = adventure;
+        this.badgeGUI = badgeGUI;
         this.plugin = plugin;
 
     }
@@ -170,7 +172,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
                 return badges;
             }
 
-            String query = "SELECT badge_name, badge_icon, chat_icon FROM badges";
+            String query = "SELECT badge_name, badge_icon, chat_icon, description FROM badges";  // Make sure the description is fetched too
 
             try (PreparedStatement ps = connection.prepareStatement(query);
                  ResultSet rs = ps.executeQuery()) {
@@ -179,35 +181,46 @@ public class BadgeGUI implements Listener, CommandExecutor {
                     String badgeName = rs.getString("badge_name");
                     String badgeIcon = rs.getString("badge_icon");
                     String chatIcon = rs.getString("chat_icon");
+                    String description = rs.getString("description");
 
-                    if (chatIcon == null || chatIcon.trim().isEmpty()) continue;
+                    if (chatIcon == null || chatIcon.trim().isEmpty()) continue; // Skip badges without a chat icon
 
                     Material iconMaterial;
                     try {
                         iconMaterial = Material.valueOf(badgeIcon.toUpperCase());
                     } catch (IllegalArgumentException e) {
-                        iconMaterial = Material.NAME_TAG;
+                        iconMaterial = Material.NAME_TAG;  // Fallback to NAME_TAG if invalid
                     }
 
-                    ItemStack badge = new ItemStack(iconMaterial);
-                    ItemMeta meta = badge.getItemMeta();
-                    if (meta != null) {
-                        meta.setDisplayName("§c§l" + badgeName);
+                    // Create the Badge object
+                    Badge badge = new Badge(badgeName, badgeName, chatIcon.trim(), NamedTextColor.GOLD, description);
 
+                    // Create ItemStack for the badge
+                    ItemStack badgeItem = new ItemStack(iconMaterial);
+                    ItemMeta meta = badgeItem.getItemMeta();
+                    if (meta != null) {
+                        // Set the display name (this can use a Component if you're using adventure, or a string)
+                        meta.setDisplayName(badgeName);  // Use just the badge name for display name
+
+                        // Set lore (tooltip) with chat icon and description
                         List<String> lore = new ArrayList<>();
-                        lore.add("Chat Icon: [ " + chatIcon.trim() + " ]");
+                        lore.add("Chat Icon: [ " + chatIcon.trim() + " ]");  // Add the chat icon lore
+                        lore.add("Description: " + description);  // Add the description lore
+                        lore.add("Click to Apply!");  // Optional additional lore
                         meta.setLore(lore);
 
+                        // Optionally add enchantments, flags, etc.
                         meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
-                        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-                        badge.setItemMeta(meta);
+                        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);  // Hide enchantments from view
+
+                        badgeItem.setItemMeta(meta);  // Apply the ItemMeta to the ItemStack
                     }
 
-                    badges.add(badge);
+                    badges.add(badgeItem);  // Add the badge item to the list
                 }
             }
         } catch (SQLException e) {
-            badges.add(createDefaultBadge());
+            badges.add(createDefaultBadge());  // Return default badge in case of an error
             e.printStackTrace();
         }
 

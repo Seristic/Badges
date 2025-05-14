@@ -71,7 +71,8 @@ public class DatabaseManager {
                     "badge_description TEXT, " +
                     "chat_icon TEXT, " +
                     "badge_icon VARCHAR(255), " +
-                    "badge_color VARCHAR(32), " +  // <- Add this line
+                    "badge_color VARCHAR(32), " +
+                    "description VARCHAR(255)," +
                     "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                     ");";
 
