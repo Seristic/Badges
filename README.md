@@ -1,6 +1,6 @@
-# 🏷️ ChatBadges
+# 🏷️ Badges
 
-**ChatBadges** is a fully customizable Minecraft plugin that allows players to collect, manage, and display badges in chat using GUI interfaces, commands, and database integration.
+**Badges** is a fully customizable Minecraft plugin that allows players to collect, manage, and display badges in chat using GUI interfaces, commands, and database integration.
 
 > Built with ❤️ for community servers, content creators, roleplay worlds, and achievement hunters.
 
@@ -10,7 +10,6 @@
 
 - 🎨 Custom badges with colors, icons, and hoverable chat tags
 - 🧍 Player badge management GUI (`/badge`)
-- 🧑‍🤝‍🧑 Group badges with sharing and ownership features
 - 🛠️ Admin commands to create, edit, and delete badges
 - 🧾 MySQL support for persistent badge storage
 - 🔐 Permission-based access control
@@ -29,9 +28,9 @@
 
 ### 📥 Installation
 
-1. Download the latest release from the [Releases Page](https://github.com/yourname/ChatBadges/releases).
-2. Drop the `ChatBadges.jar` into your server’s `plugins/` directory.
-3. Configure your database settings in `plugins/ChatBadges/config.yml`.
+1. Download the latest release from the [Releases Page](https://github.com/Seristic/Badges/releases).
+2. Drop the `Badges.jar` into your server’s `plugins/` directory.
+3. Configure your database settings in `plugins/Badges/config.yml`.
 4. Start (or restart) your server.
 5. Use `/badge` in-game!
 
@@ -43,20 +42,20 @@
 
 | Command                    | Description                             | Permission              |
 |---------------------------|-----------------------------------------|--------------------------|
-| `/badge`                  | Open your badge GUI                     | `chatbadges.use`         |
-| `/badge set [name]`       | Set your badge                          | `chatbadges.set`         |
-| `/badge remove`           | Remove current badge                    | `chatbadges.set`         |
-| `/badge owned`            | View your owned badges                  | `chatbadges.use`         |
+| `/badge`                  | Open your badge GUI                     | `badges.use`         |
+| `/badge set [name]`       | Set your badge                          | `badges.set`         |
+| `/badge remove`           | Remove current badge                    | `badges.set`         |
+| `/badge owned`            | View your owned badges                  | `badges.use`         |
 
 ### 🛠️ Admin Commands
 
 | Command                              | Description                                       | Permission               |
 |--------------------------------------|---------------------------------------------------|---------------------------|
-| `/badge create <name> <color> <icon> <chatIcon> <hoverText...>` | Create a new badge     | `chatbadges.admin`        |
-| `/badge delete <name>`              | Delete a badge                                    | `chatbadges.admin`        |
-| `/badge give <badge> <player>`     | Grant badge to player                             | `chatbadges.give`         |
-| `/badge take <badge> <player>`     | Remove badge from player                          | `chatbadges.take`         |
-| `/badge reload`                     | Reloads config and badge data                     | `chatbadges.admin`        |
+| `/badge create <name> <color> <icon> <chatIcon> <hoverText...>` | Create a new badge     | `badges.admin`        |
+| `/badge delete <name>`              | Delete a badge                                    | `badges.admin`        |
+| `/badge give <badge> <player>`     | Grant badge to player                             | `badges.give`         |
+| `/badge take <badge> <player>`     | Remove badge from player                          | `badges.take`         |
+| `/badge reload`                     | Reloads config and badge data                     | `badges.admin`        |
 
 ---
 

@@ -1,4 +1,4 @@
-# 📝 ChatBadges TODO List
+# 📝 Badges TODO List
 
 This file contains the current development goals and improvements for the Badges plugin.
 
@@ -18,12 +18,13 @@ This file contains the current development goals and improvements for the Badges
 
 ## 🛠️ In Progress
 - [x] Support multi-page GUI navigation
-- [ ] Dynamic tab completion for subcommands
+- [x] Dynamic tab completion for subcommands
 - [x] Error handling + logging in database operations
-- [ ] Improve command dispatcher to fully decouple subcommands (e.g., delete, give, create)
+- [x] Improve command dispatcher to fully decouple subcommands (e.g., delete, give, create)
 - [ ] Dynamic tab completion for all subcommands (badge names, player names, etc.)
 - [ ] Proper permission checks for each command (e.g., `chatbadges.give`, `chatbadges.create`)
 - [ ] Add config options for GUI customization (title, colors, layout)
+- [ ] Replace `e.printStackTrace();` with proper error logging custom made.
 
 ## 🧠 Future Features
 - [ ] Badge categories (e.g., earned, seasonal, group)
@@ -42,6 +43,7 @@ This file contains the current development goals and improvements for the Badges
 - [ ] PlaceholderAPI support for badge display in chat/tab/scoreboard
 - [ ] Discord integration: sync badge announcements to channels (Very unlikely)
 - [ ] Badge sorting options (alphabetical, rarity, date earned)
+- [ ] Group badges with sharing and ownership features
 
 ---
 
