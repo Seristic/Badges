@@ -24,6 +24,7 @@ This file contains the current development goals and improvements for the Badges
 - [ ] Dynamic tab completion for all subcommands (badge names, player names, etc.)
 - [ ] Proper permission checks for each command (e.g., `chatbadges.give`, `chatbadges.create`)
 - [ ] Add config options for GUI customization (title, colors, layout)
+- [ ] Replace `e.printStackTrace();` with proper error logging custom made.
 
 ## 🧠 Future Features
 - [ ] Badge categories (e.g., earned, seasonal, group)
