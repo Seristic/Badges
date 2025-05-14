@@ -17,18 +17,16 @@ This file contains the current development goals and improvements for the Badges
 ---
 
 ## 🛠️ In Progress
-- [x] Support multi-page GUI navigation
 - [x] Dynamic tab completion for subcommands
 - [x] Error handling + logging in database operations
 - [x] Improve command dispatcher to fully decouple subcommands (e.g., delete, give, create)
-- [ ] Dynamic tab completion for all subcommands (badge names, player names, etc.)
-- [ ] Proper permission checks for each command (e.g., `chatbadges.give`, `chatbadges.create`)
+- [x] Proper permission checks for each command (e.g., `chatbadges.give`, `chatbadges.create`)
 - [ ] Add config options for GUI customization (title, colors, layout)
 - [ ] Replace `e.printStackTrace();` with proper error logging custom made.
-
+- [x] Hover tooltips in GUI showing who created the badge
+- [x] Add badge preview tooltips showing description, icon, and owner
 ## 🧠 Future Features
 - [ ] Badge categories (e.g., earned, seasonal, group)
-- [ ] Hover tooltips in GUI showing who created the badge
 - [ ] JSON-based badge import/export system
 - [ ] Player profile pages showing all earned badges
 - [ ] PlaceholderAPI and Vault integration
@@ -36,7 +34,6 @@ This file contains the current development goals and improvements for the Badges
 - [ ] Badge update cache to prevent excessive SQL calls
 - [ ] Add a reload command that refreshes config + GUI templates without restart
 - [ ] Split GUI into views: `My Badges`, `Group Badges`, `All Badges`
-- [ ] Add badge preview tooltips showing description, icon, and owner
 - [ ] Profile command (`/badge profile [player]`) showing all badges owned
 - [ ] Player achievements or milestones that grant badges
 - [ ] Export/import badges via JSON/YAML for migration
