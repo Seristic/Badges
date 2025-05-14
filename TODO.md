@@ -1,4 +1,4 @@
-# 📝 ChatBadges TODO List
+# 📝 Badges TODO List
 
 This file contains the current development goals and improvements for the Badges plugin.
 
