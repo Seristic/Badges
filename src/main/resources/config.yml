@@ -1,6 +1,8 @@
 settings:
-  assign-default-badge: true
+  assign-default-badge: false
   default-badge: "[ ✦ ]"
+  enable-hover-text: true
+
 
 mysql:
   host: "localhost"
