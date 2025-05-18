@@ -4,11 +4,6 @@ import com.seristic.badges.Badges;
 import com.seristic.badges.util.helpers.PluginLogger;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.bukkit.Bukkit;
-
-// Package Imports only
-//import com.seristic.shaded.hikari.HikariConfig;
-//import com.seristic.shaded.hikari.HikariDataSource;
 
 import java.sql.*;
 import java.util.UUID;
@@ -110,6 +105,12 @@ public class DatabaseManager {
                 deactivate.executeUpdate();
             }
 
+            if (badgeId == -1) {
+                // Special case: no badge or default badge, don't insert or update player_badges
+                // You could also insert a row with badge_id = NULL or skip entirely
+                return;
+            }
+
             // Check if badge already unlocked
             boolean alreadyUnlocked = false;
             try (PreparedStatement check = connection.prepareStatement(
@@ -143,20 +144,6 @@ public class DatabaseManager {
         } catch (SQLException e) {
             PluginLogger.severe(Badges.PREFIX + "An error occurred while setting the player's badge.");
             PluginLogger.logException("Failed to equip badge id " + badgeId + " for UUID " + uuid.toString(), e);
-        }
-    }
-
-    public static boolean badgeExists(String badgeName) {
-        try (Connection connection = getConnection();
-             PreparedStatement ps = connection.prepareStatement(
-                     "SELECT 1 FROM badges WHERE LOWER(badge_name) = ? LIMIT 1")) {
-            ps.setString(1, badgeName.trim().toLowerCase());
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // true if found
-            }
-        } catch (SQLException e) {
-            PluginLogger.warning("Failed to check badge existence: " + e.getMessage());
-            return false;
         }
     }
 }

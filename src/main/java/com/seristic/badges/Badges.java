@@ -32,7 +32,6 @@ public final class Badges extends JavaPlugin {
 
         saveDefaultConfig();
 
-        this.adventure = BukkitAudiences.create(this);
         this.badgeGUI = new BadgeGUI(adventure, this.badgeGUI, this);
 
         CommandHandler commandHandler = new CommandHandler(adventure, badgeGUI);
@@ -44,7 +43,6 @@ public final class Badges extends JavaPlugin {
         String password = getConfig().getString("mysql.password");
 
         DatabaseManager.connect(host, port, database, username, password);
-
         BadgeManager.loadConfig(getConfig());
 
         Bukkit.getScheduler().runTaskLater(this, () -> {
@@ -62,10 +60,9 @@ public final class Badges extends JavaPlugin {
             PluginLogger.warning(PREFIX + "Command 'badge' not found in plugin.yml");
         }
 
-        getServer().getPluginManager().registerEvents(new BadgeGUI(adventure, badgeGUI, this), this);
+        // Event registrations
         getServer().getPluginManager().registerEvents(new ChatBadgeListener(), this);
         getServer().getPluginManager().registerEvents(new BadgeClickListener(), this);
-
     }
 
     @Override
@@ -75,6 +72,7 @@ public final class Badges extends JavaPlugin {
         }
         DatabaseManager.close();
     }
+
     public static Badges getInstance() {
         return JavaPlugin.getPlugin(Badges.class);
     }
