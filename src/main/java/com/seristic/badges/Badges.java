@@ -7,6 +7,8 @@ import com.seristic.badges.gui.BadgeManager;
 import com.seristic.badges.util.database.DatabaseManager;
 import com.seristic.badges.util.helpers.MessageUtil;
 import com.seristic.badges.util.helpers.PluginLogger;
+import com.seristic.badges.util.listeners.BadgeClickListener;
+import com.seristic.badges.util.listeners.ChatBadgeListener;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -17,13 +19,15 @@ public final class Badges extends JavaPlugin {
     private BukkitAudiences adventure;
     private BadgeGUI badgeGUI;
 
-    public static final String PREFIX = "§6[§eChat Badges§6]§r ";
+    public static final String PREFIX = "§6[§eBadges§6]§r ";
 
     @Override
     public void onEnable() {
         getLogger().info(PREFIX + " has been enabled.");
 
-        MessageUtil.initialize(BukkitAudiences.create(this));
+        this.adventure = BukkitAudiences.create(this);
+        MessageUtil.initialize(this.adventure);
+
         BadgeCommandTabCompleter tabCompleter = new BadgeCommandTabCompleter();
 
         saveDefaultConfig();
@@ -46,7 +50,7 @@ public final class Badges extends JavaPlugin {
         Bukkit.getScheduler().runTaskLater(this, () -> {
             BadgeManager.setupLuckPerms();
             if (BadgeManager.getLuckPerms() == null) {
-                getLogger().warning("LuckPerms was not found! Disabling badge functionality.");
+                PluginLogger.severe("LuckPerms was not found! Disabling badge functionality.");
             }
         }, 1L);
 
@@ -55,10 +59,12 @@ public final class Badges extends JavaPlugin {
             badgeCommand.setExecutor(commandHandler);
             badgeCommand.setTabCompleter(tabCompleter);
         } else {
-            PluginLogger.getLogger().warning(PREFIX + "Command 'badge' not found in plugin.yml");
+            PluginLogger.warning(PREFIX + "Command 'badge' not found in plugin.yml");
         }
 
         getServer().getPluginManager().registerEvents(new BadgeGUI(adventure, badgeGUI, this), this);
+        getServer().getPluginManager().registerEvents(new ChatBadgeListener(), this);
+        getServer().getPluginManager().registerEvents(new BadgeClickListener(), this);
 
     }
 
@@ -68,5 +74,8 @@ public final class Badges extends JavaPlugin {
             this.adventure.close();
         }
         DatabaseManager.close();
+    }
+    public static Badges getInstance() {
+        return JavaPlugin.getPlugin(Badges.class);
     }
 }

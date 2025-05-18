@@ -5,6 +5,7 @@ import com.seristic.badges.commands.BadgeDeleteCommand;
 import com.seristic.badges.commands.BadgeGUICommand;
 import com.seristic.badges.gui.BadgeGUI;
 import com.seristic.badges.util.helpers.MessageUtil;
+import com.seristic.badges.util.helpers.PluginLogger;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -51,7 +52,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                     defaultCmd.execute(sender, new String[0]);
                 } catch (Exception e) {
                     MessageUtil.send(sender, Component.text("An error occurred while executing the command.", NamedTextColor.RED));
-                    e.printStackTrace();
+                    PluginLogger.logException(null, e);
                 }
 
                 return true;
@@ -76,7 +77,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             sub.execute(sender, Arrays.copyOfRange(args, 1, args.length));
         } catch (Exception e) {
             MessageUtil.send(sender, Component.text("An error occurred while executing the command.", NamedTextColor.RED));
-            e.printStackTrace();
+            PluginLogger.logException(null, e);
         }
 
         return true;

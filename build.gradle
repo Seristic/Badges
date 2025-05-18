@@ -22,8 +22,8 @@ repositories {
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT")
     implementation 'com.zaxxer:HikariCP:5.1.0'
-    implementation("net.kyori:adventure-api:4.14.0")
-    implementation("net.kyori:adventure-platform-bukkit:4.3.1")
+//    implementation("net.kyori:adventure-api:4.21.0")
+    implementation("net.kyori:adventure-platform-bukkit:4.4.0")
     compileOnly('net.luckperms:api:5.4')
 }
 

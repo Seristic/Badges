@@ -3,11 +3,13 @@ package com.seristic.badges.gui;
 import com.seristic.badges.util.Badge;
 import com.seristic.badges.util.database.DatabaseManager;
 import com.seristic.badges.util.helpers.MessageUtil;
+import com.seristic.badges.util.helpers.PluginLogger;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -21,6 +23,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,9 +86,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player)) return;
-
-        Player player = (Player) event.getWhoClicked();
+        if (!(event.getWhoClicked() instanceof Player player)) return;
 
         // Ensure that the event is happening in the BadgeGUI
         if (event.getView().getTitle().startsWith(GUI_TITLE)) {
@@ -110,7 +111,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
             ItemMeta meta = clickedItem.getItemMeta();
             if (meta != null && meta.hasLore() && !meta.getLore().isEmpty()) {
                 // Extract chat icon from lore
-                String chatIconLore = meta.getLore().get(0);
+                String chatIconLore = meta.getLore().getFirst();
                 String chatIcon = chatIconLore.replace("Chat Icon: ", ""); // Remove prefix
 
                 applyBadgeWithLuckPerms(player, chatIcon);
@@ -197,22 +198,27 @@ public class BadgeGUI implements Listener, CommandExecutor {
                     // Create ItemStack for the badge
                     ItemStack badgeItem = new ItemStack(iconMaterial);
                     ItemMeta meta = badgeItem.getItemMeta();
+
                     if (meta != null) {
-                        // Set the display name (this can use a Component if you're using adventure, or a string)
-                        meta.setDisplayName(badgeName);  // Use just the badge name for display name
+                        // Set the display name
+                        meta.setDisplayName(badgeName);  // e.g., ♥ Gladiator
 
                         // Set lore (tooltip) with chat icon and description
                         List<String> lore = new ArrayList<>();
-                        lore.add("Chat Icon: [ " + chatIcon.trim() + " ]");  // Add the chat icon lore
-                        lore.add("Description: " + description);  // Add the description lore
-                        lore.add("Click to Apply!");  // Optional additional lore
+                        lore.add("Chat Icon: [ " + chatIcon.trim() + " ]");
+                        lore.add("Description: " + description);
+                        lore.add("Click to Apply!");
                         meta.setLore(lore);
 
-                        // Optionally add enchantments, flags, etc.
-                        meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
-                        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);  // Hide enchantments from view
+                        // ✅ FIXED: use static key "badge_name" to store the badge name
+                        NamespacedKey key = new NamespacedKey(plugin, "badge_name");
+                        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, badge.getName());
 
-                        badgeItem.setItemMeta(meta);  // Apply the ItemMeta to the ItemStack
+                        // Optional: Enchant for visual flair
+                        meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
+                        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+
+                        badgeItem.setItemMeta(meta); // ✅ Apply final meta to item
                     }
 
                     badges.add(badgeItem);  // Add the badge item to the list
@@ -220,7 +226,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
             }
         } catch (SQLException e) {
             badges.add(createDefaultBadge());  // Return default badge in case of an error
-            e.printStackTrace();
+            PluginLogger.logException(null, e);
         }
 
         return badges;

@@ -12,10 +12,12 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.messenger.message.Message;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.entity.Player;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -50,16 +52,17 @@ public class BadgeCreateCommand extends BadgeSubCommand {
             return;
         }
 
-        if (args.length < 5) {
-            MessageUtil.send(sender, Component.text("Usage: /badge create <badgeName> <color> <iconMaterial> <chatIcon> <hoverText...>", NamedTextColor.RED));
+        if (args.length < 4) {
+            MessageUtil.send(sender, Component.text("Usage: /badge create <name> <color> <icon> [description] [symbol]", NamedTextColor.RED));
             return;
         }
 
         String badgeName = args[0];
         String colorStr = args[1];
         String iconMaterialName = args[2];
-        String chatIcon = args[3];
-        String hoverText = String.join(" ", Arrays.copyOfRange(args, 4, args.length));
+        String chatIcon = args[3]
+                ;
+        String hoverText = args.length > 4 ? String.join(" ", Arrays.copyOfRange(args, 4, args.length)) : "";
 
         NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
         if (color == null) {
@@ -81,6 +84,16 @@ public class BadgeCreateCommand extends BadgeSubCommand {
                 return;
             }
 
+            String checkSql = "SELECT COUNT(*) FROM badges WHERE badge_name = ?";
+            try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+                checkStmt.setString(1, badgeName);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    MessageUtil.send(player, Component.text(Badges.PREFIX + "A badge with the name '" + badgeName + "' already exists", NamedTextColor.RED));
+                    return;
+                }
+            }
+
             String insertSql = """
                     INSERT INTO badges (badge_name, badge_description, badge_icon, badge_color, chat_icon)
                     VALUES (?, ?, ?, ?, ?)
@@ -96,11 +109,11 @@ public class BadgeCreateCommand extends BadgeSubCommand {
 
                 MessageUtil.send(sender, Component.text("Badge '" + badgeName + "' created successfully and added to the database.", NamedTextColor.GREEN));
                 badgeGUI.openBadgeGUI(player, badgeGUI.getBadges(player), 0);;
-                PluginLogger.getLogger().info(Badges.PREFIX + "Badge '" + badgeName + "' created by " + player.getName());
+                PluginLogger.info(Badges.PREFIX + "Badge '" + badgeName + "' created by " + player.getName());
             }
         } catch (SQLException e) {
             MessageUtil.send(sender, Component.text("Failed to create badge in the database.", NamedTextColor.RED));
-            e.printStackTrace();
+            PluginLogger.logException(null, e);
         }
     }
 }

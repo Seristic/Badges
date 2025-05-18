@@ -66,7 +66,7 @@ public class BadgeDeleteCommand extends BadgeSubCommand {
 
                 if (rowsAffected > 0) {
                     MessageUtil.send(sender, Component.text("Badge '" + badgeName + "' deleted.", NamedTextColor.GREEN));
-                    PluginLogger.getLogger().info("[ChatBadges] Badge '" + badgeName + "' deleted by " + player.getName());
+                    PluginLogger.info("[ChatBadges] Badge '" + badgeName + "' deleted by " + player.getName());
                 } else {
                     MessageUtil.send(sender, Component.text("Badge '" + badgeName + "' not found.", NamedTextColor.RED));
                 }
@@ -74,7 +74,7 @@ public class BadgeDeleteCommand extends BadgeSubCommand {
 
         } catch (SQLException e) {
             MessageUtil.send(sender, Component.text("Failed to delete badge.", NamedTextColor.RED));
-            e.printStackTrace();
+            PluginLogger.logException(null, e);
         }
     }
 }

@@ -2,7 +2,7 @@ name: Badges
 version: '1.0'
 main: com.seristic.badges.Badges
 api-version: '1.21'
-prefix: Chat Badges
+prefix: Badges
 load: STARTUP
 authors: [ Seristic ]
 description: Allows users to have Badges in chat

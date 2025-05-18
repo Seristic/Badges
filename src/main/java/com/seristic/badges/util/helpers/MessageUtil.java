@@ -2,6 +2,8 @@ package com.seristic.badges.util.helpers;
 
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.command.CommandSender;
 
 public final class MessageUtil {
@@ -21,5 +23,10 @@ public final class MessageUtil {
         } else {
             adventure.sender(sender).sendMessage(message);
         }
+    }
+    public static Component createBadgeHoverText(String badgePrefix) {
+        return Component.text("Badges: " + badgePrefix)
+                .color(TextColor.color(0xFFD700))
+                .decorate(TextDecoration.BOLD);
     }
 }

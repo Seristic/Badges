@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 //import com.seristic.shaded.hikari.HikariDataSource;
 
 import java.sql.*;
+import java.util.UUID;
 
 public class DatabaseManager {
     private static HikariDataSource dataSource;
@@ -23,7 +24,7 @@ public class DatabaseManager {
             try (Connection tempConnection = DriverManager.getConnection(initUrl, username, password)) {
                 Statement statement = tempConnection.createStatement();
                 statement.executeUpdate("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
-                PluginLogger.getLogger().info(Badges.PREFIX + "Database ensured: " + database);
+                PluginLogger.info(Badges.PREFIX + "Database ensured: " + database);
             }
 
             HikariConfig config = new HikariConfig();
@@ -36,15 +37,15 @@ public class DatabaseManager {
             config.setMaxLifetime(1800000);
 
             dataSource = new HikariDataSource(config);
-            PluginLogger.getLogger().info(Badges.PREFIX + "Connected to the MySQL using HikariCP.");
+            PluginLogger.info(Badges.PREFIX + "Connected to the MySQL using HikariCP.");
 
             createTable();
 
         } catch (ClassNotFoundException e) {
-            PluginLogger.getLogger().severe(Badges.PREFIX + "MySQL driver not found.");
-            e.printStackTrace();
+            PluginLogger.severe(Badges.PREFIX + "MySQL driver not found.");
+            PluginLogger.logException(null, e);
         } catch (SQLException e) {
-            PluginLogger.getLogger().severe(Badges.PREFIX + "Failed to connect MySQL");
+            PluginLogger.severe(Badges.PREFIX + "Failed to connect MySQL");
         }
     }
 
@@ -58,13 +59,13 @@ public class DatabaseManager {
     public static void close() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
-            PluginLogger.getLogger().warning(Badges.PREFIX + "Database connection pool closed");
+            PluginLogger.warning(Badges.PREFIX + "Database connection pool closed");
         }
     }
 
     private static void createTable() throws SQLException {
         if (dataSource == null) {
-            PluginLogger.getLogger().warning(Badges.PREFIX + "No database connection available.");
+            PluginLogger.warning(Badges.PREFIX + "No database connection available.");
             return;
         }
 
@@ -93,42 +94,27 @@ public class DatabaseManager {
             statement.executeUpdate(createBadgesTable);
             statement.executeUpdate(createPlayerBadgesTable);
 
-            PluginLogger.getLogger().info(Badges.PREFIX + "Database tables created successfully.");
+            PluginLogger.info(Badges.PREFIX + "Database tables created successfully.");
         } catch (SQLException e) {
-            PluginLogger.getLogger().severe(Badges.PREFIX + "Failed to create database table.");
-            e.printStackTrace();
+            PluginLogger.severe(Badges.PREFIX + "Failed to create database table.");
+            PluginLogger.logException(null, e);
         }
     }
 
-    public static void setPlayerBadge(String uuid, String chatIcon) {
+    public static void setPlayerBadge(UUID uuid, int badgeId) {
         try (Connection connection = getConnection()) {
-            int badgeId = -1;
-
-            try (PreparedStatement findBadge = connection.prepareStatement(
-                    "SELECT badge_id FROM badges WHERE chat_icon = ?")) {
-                findBadge.setString(1, chatIcon);
-                try (ResultSet rs = findBadge.executeQuery()) {
-                    if (rs.next()) {
-                        badgeId = rs.getInt("badge_id");
-                    }
-                }
-            }
-
-            if (badgeId == -1) {
-                PluginLogger.getLogger().warning(Badges.PREFIX + "Badge not found in the database for chat_icon: " + chatIcon);
-                return;
-            }
-
+            // Deactivate all current badges
             try (PreparedStatement deactivate = connection.prepareStatement(
                     "UPDATE player_badges SET is_active = FALSE WHERE uuid = ?")) {
-                deactivate.setString(1, uuid);
+                deactivate.setString(1, uuid.toString());
                 deactivate.executeUpdate();
             }
 
+            // Check if badge already unlocked
             boolean alreadyUnlocked = false;
             try (PreparedStatement check = connection.prepareStatement(
-                    "SELECT * FROM player_badges WHERE uuid = ? AND badge_id = ?")) {
-                check.setString(1, uuid);
+                    "SELECT 1 FROM player_badges WHERE uuid = ? AND badge_id = ?")) {
+                check.setString(1, uuid.toString());
                 check.setInt(2, badgeId);
                 try (ResultSet rs = check.executeQuery()) {
                     if (rs.next()) {
@@ -138,38 +124,38 @@ public class DatabaseManager {
             }
 
             if (alreadyUnlocked) {
+                // Activate badge
                 try (PreparedStatement update = connection.prepareStatement(
-                        "UPDATE player_badges SET is_active = TRUE, active_badge = ? WHERE uuid = ? AND badge_id = ?")) {
-                    update.setString(1, chatIcon);
-                    update.setString(2, uuid);
-                    update.setInt(3, badgeId);
+                        "UPDATE player_badges SET is_active = TRUE WHERE uuid = ? AND badge_id = ?")) {
+                    update.setString(1, uuid.toString());
+                    update.setInt(2, badgeId);
                     update.executeUpdate();
                 }
             } else {
+                // Insert new badge
                 try (PreparedStatement insert = connection.prepareStatement(
-                        "INSERT INTO player_badges (uuid, badge_id, active_badge, is_active) VALUES (?, ?, ?, TRUE")) {
-                    insert.setString(1, uuid);
+                        "INSERT INTO player_badges (uuid, badge_id, active_badge, is_active) VALUES (?, ?, '', TRUE)")) {
+                    insert.setString(1, uuid.toString());
                     insert.setInt(2, badgeId);
-                    insert.setString(3, chatIcon);
                     insert.executeUpdate();
                 }
             }
         } catch (SQLException e) {
-            PluginLogger.getLogger().severe(Badges.PREFIX + "An error occurred while setting the player's badge.");
-            e.printStackTrace();
+            PluginLogger.severe(Badges.PREFIX + "An error occurred while setting the player's badge.");
+            PluginLogger.logException("Failed to equip badge id " + badgeId + " for UUID " + uuid.toString(), e);
         }
     }
 
-    public static boolean badgeExists(String chatIcon) {
+    public static boolean badgeExists(String badgeName) {
         try (Connection connection = getConnection();
              PreparedStatement ps = connection.prepareStatement(
-                     "SELECT 1 FROM badges WHERE chat_icon = ? LIMIT 1")) {
-            ps.setString(1, chatIcon);
+                     "SELECT 1 FROM badges WHERE LOWER(badge_name) = ? LIMIT 1")) {
+            ps.setString(1, badgeName.trim().toLowerCase());
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next(); // true if found
             }
         } catch (SQLException e) {
-            Bukkit.getLogger().warning("Failed to check badge existence: " + e.getMessage());
+            PluginLogger.warning("Failed to check badge existence: " + e.getMessage());
             return false;
         }
     }

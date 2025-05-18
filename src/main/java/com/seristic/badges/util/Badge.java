@@ -42,16 +42,12 @@ public class Badge {
 
     // Create the hoverable component for chat
     public Component asChatComponent() {
-        return Component.text(chatIcon + " " + name)
+        return Component.text(chatIcon)
                 .color(color)
-                .hoverEvent(
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
                         Component.text()
-                                .append(Component.text(chatIcon + " " + name + "\n", color))
-                                .append(Component.text("Color: ", NamedTextColor.GRAY))
-                                .append(Component.text(color.toString(), color))
-                                .append(Component.text("\nDescription: ", NamedTextColor.GRAY))
-                                .append(Component.text(description, NamedTextColor.WHITE))
+                                .append(Component.text(name))
                                 .build()
-                );
+                ));
     }
 }
