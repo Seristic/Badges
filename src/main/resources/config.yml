@@ -1,12 +1,73 @@
+# Configuration Key:
+# ==================
+# settings:      General badge behavior and display settings
+# badge_slots:   Number of badge slots per user rank
+# mysql:         Database connection settings
+# gui:           Interface customization options and navigation
+# default-badge: Default badge appearance and properties
+# sounds:        Sound effect customization options
+# api:           REST API configuration and security
+# ==================
+
+# General Settings
 settings:
   assign-default-badge: false
   default-badge: "[ ✦ ]"
   enable-hover-text: true
 
+# Badge Configuration
+badge_slots:
+  default: 1
+  vip: 3
+  premium: 5
 
+# Database Configuration
 mysql:
   host: "localhost"
   port: 3306
   database: "badges"
   username: "root"
   password: ""
+
+# GUI Configuration
+gui:
+  size: 27
+  title: "Badge Selection"
+  border-material: BLACK_STAINED_GLASS_PANE
+  border-name: ""
+  navigation:
+    next-page:
+      slot: 26
+      material: ARROW
+      display-name: "Next Page"
+    previous-page:
+      slot: 18
+      material: ARROW
+      display-name: "Previous Page"
+  badges-per-page: 7
+
+# Default Badge Configuration
+default-badge:
+  material: NAME_TAG
+  display-name: "&7&lDefault Badge"
+  chat-icon: "✦"
+  enchantment: LUCK_OF_THE_SEA
+  hide-enchantments: true
+
+# Sound Configuration
+sounds:
+  apply-badge:
+    key: "minecraft:block.note_block.bell"
+    sound: BLOCK_NOTE_BLOCK_BELL
+    source: "master"
+    volume: 1.0
+    pitch: 1.5
+
+# API Configuration
+api:
+  port: 8080
+  debug: false
+  enabled: true
+  base-path: '/badges'
+  security:
+    api-key: 'your-secure-key-here'

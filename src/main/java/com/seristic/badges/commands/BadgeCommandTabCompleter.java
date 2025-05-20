@@ -20,41 +20,73 @@ public class BadgeCommandTabCompleter implements TabCompleter {
             "black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold",
             "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white"
     );
+    private static final List<String> BOOLEAN_OPTIONS = Arrays.asList("true", "false");
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
         List<String> completions = new ArrayList<>();
 
+        // Step 1: Handle subcommands
         if (args.length == 1) {
+            String input = args[0].toLowerCase();
             completions = SUBCOMMANDS.stream()
-                    .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
+                    .filter(cmd -> cmd.startsWith(input))
                     .collect(Collectors.toList());
         }
 
-        if (args.length == 2) {
-            String sub = args[0].toLowerCase();
-            if (sub.equals("create")) {
-                completions.add("<badgeName>");
-            } else if (Arrays.asList("set", "give", "take", "share", "delete", "members", "rename", "setowner").contains(sub)) {
-                completions.add("<badge>");
-            }
+        // Step 2: Badge name
+        if (args.length == 2 && args[0].equalsIgnoreCase("create")) {
+            completions.add("<badgeName>");
         }
 
+        // Step 3: Color
         if (args.length == 3 && args[0].equalsIgnoreCase("create")) {
+            String input = args[2].toLowerCase();
             completions = COLOURS.stream()
-                    .filter(color -> color.startsWith(args[2].toLowerCase()))
+                    .filter(color -> color.startsWith(input))
                     .collect(Collectors.toList());
         }
 
+        // Step 4: Material icon
         if (args.length == 4 && args[0].equalsIgnoreCase("create")) {
+            String input = args[3].toLowerCase();
             completions = Arrays.stream(Material.values())
                     .map(Material::name)
-                    .filter(name -> name.toLowerCase().startsWith(args[3].toLowerCase()))
+                    .filter(name -> name.toLowerCase().startsWith(input))
                     .collect(Collectors.toList());
         }
 
+        // Step 5: Chat icon (e.g. ❀, ❤️)
         if (args.length == 5 && args[0].equalsIgnoreCase("create")) {
             completions.add("<chatIcon>");
+        }
+
+        // Step 6: Hover text
+        if (args.length == 6 && args[0].equalsIgnoreCase("create")) {
+            completions.add("<hoverText>");
+        }
+
+        // Step 7: requiresPermission (permission:true/false)
+        if (args.length == 7 && args[0].equalsIgnoreCase("create")) {
+            String input = args[6].toLowerCase().trim();
+            completions = BOOLEAN_OPTIONS.stream()
+                    .map(val -> "permission:" + val)
+                    .filter(opt -> opt.startsWith(input))
+                    .collect(Collectors.toList());
+        }
+
+        // Step 8: isHidden (hidden:true/false)
+        if (args.length == 8 && args[0].equalsIgnoreCase("create")) {
+            String input = args[7].toLowerCase().trim();
+            completions = BOOLEAN_OPTIONS.stream()
+                    .map(val -> "hidden:" + val)
+                    .filter(opt -> opt.startsWith(input))
+                    .collect(Collectors.toList());
+        }
+
+        // Step 9: Badge group
+        if (args.length == 9 && args[0].equalsIgnoreCase("create")) {
+            completions.add("<badge_group>");
         }
 
         return completions;

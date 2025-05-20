@@ -63,12 +63,12 @@ public class BadgeManager {
                 return;
             }
 
-            String badgeQuery = "SELECT badge_id, badge_name, chat_icon, badge_color, badge_description FROM badges WHERE LOWER(TRIM(badge_name)) = LOWER(TRIM(?))";
+            String badgeQuery = "SELECT badge_id, badge_name, chat_icon, badge_color FROM badges WHERE LOWER(TRIM(badge_name)) = LOWER(TRIM(?))";
             int badgeId;
             String chatIcon;
             String realName;
             NamedTextColor color;
-            String description;
+
 
             try (PreparedStatement badgeCheck = connection.prepareStatement(badgeQuery)) {
                 badgeCheck.setString(1, badgeName.trim().toLowerCase(Locale.ROOT));
@@ -82,18 +82,18 @@ public class BadgeManager {
                     chatIcon = rs.getString("chat_icon");
                     realName = rs.getString("badge_name");
                     String colorStr = rs.getString("badge_color");
-                    description = rs.getString("badge_description");
                     color = ColourUtil.getNamedTextColor(colorStr);
                     if (color == null) color = NamedTextColor.WHITE;
                     Bukkit.getLogger().info("Found badge: ID=" + badgeId + ", Name=" + realName + ", Icon=" + chatIcon + ", Color=" + colorStr);
                 }
             }
 
-            Badge badge = BadgeHelper.getBadgeByName(badgeName);
-            if (badge == null) {
-                MessageUtil.send(player, Component.text("Unknown badge: " + badgeName, NamedTextColor.RED));
-                return;
-            }
+            Badge badge = new Badge(
+                    String.valueOf(badgeId),
+                    realName,
+                    chatIcon,
+                    color
+            );
 
             badgeId = Integer.parseInt(badge.getId());
 
@@ -110,9 +110,7 @@ public class BadgeManager {
                     }
                 }
             }
-
-
-            DatabaseManager.setPlayerBadge(player.getUniqueId(), badgeId);
+            DatabaseManager.setPlayerBadge(player.getUniqueId(), badgeId, 0);
 
 
             MessageUtil.send(player, BadgeHelper.formatBadgeMessage("Equipped badge: ", badge));
@@ -131,7 +129,7 @@ public class BadgeManager {
             if (connection == null) return badges;
 
             String sql = """
-            SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color, b.badge_description
+            SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color
             FROM player_badges pb
             JOIN badges b ON pb.badge_id = b.badge_id
             WHERE pb.uuid = ? AND pb.is_active = TRUE
@@ -146,12 +144,11 @@ public class BadgeManager {
                         String name = rs.getString("badge_name");
                         String chatIcon = rs.getString("chat_icon");
                         String colorStr = rs.getString("badge_color");
-                        String description = rs.getString("badge_description");
 
                         NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
                         if (color == null) color = NamedTextColor.WHITE;
 
-                        badges.add(new Badge(id, name, chatIcon, color, description));
+                        badges.add(new Badge(id, name, chatIcon, color));
                     }
                 }
             }
@@ -185,7 +182,7 @@ public class BadgeManager {
         }
 
         activeBadges.put(uuid, new ArrayList<>(Collections.singletonList(defaultBadge)));
-        DatabaseManager.setPlayerBadge(uuid, -1); // Use -1 or a special value to indicate default in your DB logic
+        DatabaseManager.setPlayerBadge(uuid, -1, 0); // Use -1 or a special value to indicate default in your DB logic
     }
 
     public static void removeBadge(Player player, String badgeName) {

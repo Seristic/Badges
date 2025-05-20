@@ -1,16 +1,16 @@
 package com.seristic.badges.gui;
 
 import com.seristic.badges.util.Badge;
+import com.seristic.badges.util.ConfigManager;
 import com.seristic.badges.util.database.DatabaseManager;
 import com.seristic.badges.util.helpers.MessageUtil;
 import com.seristic.badges.util.helpers.PluginLogger;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Sound;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -38,47 +38,49 @@ public class BadgeGUI implements Listener, CommandExecutor {
 
     private final JavaPlugin plugin;
 
-    private static final int GUI_SIZE = 27;
-    private static final int NEXT_PAGE_SLOT = 26;
-    private static final int PREV_PAGE_SLOT = 18;
-    private static final String GUI_TITLE = "Badge Selection";
-    private static final ItemStack BLACK_GLASS = createGlassPane();
-    private static final int MAX_PAGE = 4;
-    private static final int MIN_PAGE = 0;
+    private final int guiSize = ConfigManager.getGuiSize();
+    private final String guiTitle = ChatColor.translateAlternateColorCodes('&', ConfigManager.getGuiTitle());
+    private final int nextPageSlot = ConfigManager.getNextPageSlot();
+    private final int prevPageSlot = ConfigManager.getPrevPageSlot();
+    private final int maxPage = 4;
+    private final int minPage = 0;
+    private final int badgesPerPage = ConfigManager.getBadgesPerPage();
+    private final Sound applyBadgeSound = ConfigManager.getApplyBadgeSound();
+    private final float applyBadgeVolume = ConfigManager.getApplyBadgeSoundVolume();
+    private final float applyBadgePitch = ConfigManager.getApplyBadgeSoundPitch();
+    private final ItemStack blackGlass = createGlassPane();
 
     private final BukkitAudiences adventure;
     private BadgeGUI badgeGUI;
 
     public BadgeGUI(BukkitAudiences adventure, BadgeGUI badgeGUI, JavaPlugin plugin) {
         this.adventure = adventure;
-        this.badgeGUI = badgeGUI;
         this.plugin = plugin;
-
-    }
+     }
 
     public void openBadgeGUI(Player player, List<ItemStack> badges, int page) {
-        if (page < MIN_PAGE || page > MAX_PAGE) return;
+        if (page < minPage || page > maxPage) return;
 
-        Inventory gui = Bukkit.createInventory(null, GUI_SIZE, GUI_TITLE + " (Page " + (page + 1) + ")");
+        Inventory gui = Bukkit.createInventory(null, guiSize, guiTitle + " (Page " + (page + 1) + ")");
 
-        for (int i = 0; i < GUI_SIZE; i++) {
-            if (i < 9 || i >= GUI_SIZE - 9 || i % 9 == 0 || i % 9 == 8) {
-                gui.setItem(i, BLACK_GLASS);
+        for (int i = 0; i < guiSize; i++) {
+            if (i < 9 || i >= guiSize - 9 || i % 9 == 0 || i % 9 == 8) {
+                gui.setItem(i, blackGlass);
             }
         }
 
-        int startIndex = page * 7;
-        int endIndex = Math.min(startIndex + 7, badges.size());
+        int startIndex = page * badgesPerPage;
+        int endIndex = Math.min(startIndex + badgesPerPage, badges.size());
 
         for (int i = startIndex, slot = 10; i < endIndex; i++, slot++) {
             gui.setItem(slot, badges.get(i));
         }
 
-        if (page > MIN_PAGE) {
-            gui.setItem(PREV_PAGE_SLOT, createNavItem(Material.ARROW, "Previous Page"));
+        if (page > minPage) {
+            gui.setItem(prevPageSlot, createNavItem(ConfigManager.getPrevPageMaterial(), ConfigManager.getPrevPageName()));
         }
-        if (page < MAX_PAGE) {
-            gui.setItem(NEXT_PAGE_SLOT, createNavItem(Material.ARROW, "Next Page"));
+        if (page < maxPage) {
+            gui.setItem(nextPageSlot, createNavItem(ConfigManager.getNextPageMaterial(), ConfigManager.getNextPageName()));
         }
 
         player.openInventory(gui);
@@ -88,32 +90,25 @@ public class BadgeGUI implements Listener, CommandExecutor {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
-        // Ensure that the event is happening in the BadgeGUI
-        if (event.getView().getTitle().startsWith(GUI_TITLE)) {
-            event.setCancelled(true);  // Prevent any interaction with the GUI (removal, movement, etc.)
-
+        if (event.getView().getTitle().startsWith(guiTitle)) {
+            event.setCancelled(true);
             if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) return;
 
-            // Handle Navigation Buttons (Next and Previous Page)
-            String title = event.getView().getTitle();
-            int currentPage = Math.max(MIN_PAGE, Math.min(MAX_PAGE, Integer.parseInt(title.replaceAll("[^0-9]", "")) - 1));
+            int currentPage = Math.max(minPage, Math.min(maxPage, Integer.parseInt(event.getView().getTitle().replaceAll("[^0-9]", "")) - 1));
 
-            if (event.getSlot() == NEXT_PAGE_SLOT && event.getCurrentItem().getType() == Material.ARROW && currentPage < MAX_PAGE) {
+            if (event.getSlot() == nextPageSlot && currentPage < maxPage) {
                 openBadgeGUI(player, getBadges(player), currentPage + 1);
                 return;
-            } else if (event.getSlot() == PREV_PAGE_SLOT && event.getCurrentItem().getType() == Material.ARROW && currentPage > MIN_PAGE) {
+            } else if (event.getSlot() == prevPageSlot && currentPage > minPage) {
                 openBadgeGUI(player, getBadges(player), currentPage - 1);
                 return;
             }
 
-            // Handle Badge Selection
             ItemStack clickedItem = event.getCurrentItem();
             ItemMeta meta = clickedItem.getItemMeta();
             if (meta != null && meta.hasLore() && !meta.getLore().isEmpty()) {
-                // Extract chat icon from lore
                 String chatIconLore = meta.getLore().getFirst();
-                String chatIcon = chatIconLore.replace("Chat Icon: ", ""); // Remove prefix
-
+                String chatIcon = chatIconLore.replace("Chat Icon: ", "");
                 applyBadgeWithLuckPerms(player, chatIcon);
             } else {
                 MessageUtil.send(player, Component.text("Could not apply this badge. (Missing chat icon)", NamedTextColor.RED));
@@ -122,25 +117,25 @@ public class BadgeGUI implements Listener, CommandExecutor {
     }
 
     private void applyBadgeWithLuckPerms(Player player, String chatIcon) {
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.0F, 1.5F);
+        player.playSound(player.getLocation(), applyBadgeSound, SoundCategory.MASTER, applyBadgeVolume, applyBadgePitch);
         BadgeManager.setBadge(player, chatIcon);
     }
 
-    private static ItemStack createGlassPane() {
-        ItemStack item = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+    private ItemStack createGlassPane() {
+        ItemStack item = new ItemStack(ConfigManager.getBorderMaterial());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(" ");
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', ConfigManager.getBorderName()));
             item.setItemMeta(meta);
         }
         return item;
     }
 
-    private ItemStack createNavItem(Material arrow, String name) {
-        ItemStack item = new ItemStack(Material.ARROW);
+    private ItemStack createNavItem(Material material, String name) {
+        ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(name);
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
             item.setItemMeta(meta);
         }
         return item;
@@ -150,7 +145,11 @@ public class BadgeGUI implements Listener, CommandExecutor {
         ItemStack badge = new ItemStack(Material.NAME_TAG);
         ItemMeta meta = badge.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("§7§lDefault Badge");
+            Component displayName = Component.text("Default Badge")
+                    .color(NamedTextColor.GRAY)
+                    .decorate(TextDecoration.BOLD);
+
+            meta.setDisplayName(GsonComponentSerializer.gson().serialize(displayName));
 
             List<String> lore = new ArrayList<>();
             lore.add("Chat Icon: [ ✦ ]");
@@ -172,71 +171,56 @@ public class BadgeGUI implements Listener, CommandExecutor {
                 return badges;
             }
 
-            String query = "SELECT badge_name, badge_icon, chat_icon, description FROM badges";  // Make sure the description is fetched too
+            String query = "SELECT badge_name, chat_icon FROM badges";
 
             try (PreparedStatement ps = connection.prepareStatement(query);
                  ResultSet rs = ps.executeQuery()) {
 
                 while (rs.next()) {
                     String badgeName = rs.getString("badge_name");
-                    String badgeIcon = rs.getString("badge_icon");
                     String chatIcon = rs.getString("chat_icon");
-                    String description = rs.getString("description");
 
-                    if (chatIcon == null || chatIcon.trim().isEmpty()) continue; // Skip badges without a chat icon
+                    if (chatIcon == null || chatIcon.trim().isEmpty()) continue;
 
                     Material iconMaterial;
                     try {
-                        iconMaterial = Material.valueOf(badgeIcon.toUpperCase());
+                        iconMaterial = Material.valueOf(chatIcon.toUpperCase());
                     } catch (IllegalArgumentException e) {
-                        iconMaterial = Material.NAME_TAG;  // Fallback to NAME_TAG if invalid
+                        iconMaterial = Material.NAME_TAG;
                     }
 
-                    // Create the Badge object
-                    Badge badge = new Badge(badgeName, badgeName, chatIcon.trim(), NamedTextColor.GOLD, description);
-
-                    // Create ItemStack for the badge
+                    Badge badge = new Badge(badgeName, badgeName, chatIcon.trim(), NamedTextColor.GOLD);
                     ItemStack badgeItem = new ItemStack(iconMaterial);
                     ItemMeta meta = badgeItem.getItemMeta();
 
                     if (meta != null) {
-                        // Set the display name
-                        meta.setDisplayName(badgeName);  // e.g., ♥ Gladiator
-
-                        // Set lore (tooltip) with chat icon and description
+                        meta.setDisplayName(badgeName);
                         List<String> lore = new ArrayList<>();
                         lore.add("Chat Icon: [ " + chatIcon.trim() + " ]");
-                        lore.add("Description: " + description);
                         lore.add("Click to Apply!");
                         meta.setLore(lore);
 
-                        // ✅ FIXED: use static key "badge_name" to store the badge name
                         NamespacedKey key = new NamespacedKey(plugin, "badge_name");
                         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, badge.getName());
 
-                        // Optional: Enchant for visual flair
                         meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
                         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-
-                        badgeItem.setItemMeta(meta); // ✅ Apply final meta to item
+                        badgeItem.setItemMeta(meta);
                     }
-
-                    badges.add(badgeItem);  // Add the badge item to the list
+                    badges.add(badgeItem);
                 }
             }
         } catch (SQLException e) {
-            badges.add(createDefaultBadge());  // Return default badge in case of an error
+            badges.add(createDefaultBadge());
             PluginLogger.logException(null, e);
         }
-
         return badges;
     }
 
     public void deleteBadge(Player player, String badgeId) {
         try (Connection connection = DatabaseManager.getConnection()) {
-            if (connection == null || connection.isClosed()) {
-                return;
-            }
+            if (connection == null || connection.isClosed()) return;
+
             String deleteQuery = "DELETE FROM player_badges WHERE uuid = ? AND badge_id = ?";
             try (PreparedStatement ps = connection.prepareStatement(deleteQuery)) {
                 ps.setString(1, player.getUniqueId().toString());
@@ -259,8 +243,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (sender instanceof Player player) {
             if (args.length == 1) {
-                String badgeId = args[0];
-                deleteBadge(player, badgeId);  // Call the delete method to delete the badge
+                deleteBadge(player, args[0]);
                 return true;
             } else {
                 MessageUtil.send(player, Component.text("Usage: /badge delete <badgeId>", NamedTextColor.RED));

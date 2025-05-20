@@ -4,8 +4,9 @@ main: com.seristic.badges.Badges
 api-version: '1.21'
 prefix: Badges
 load: STARTUP
-authors: [ Seristic ]
+authors: [Seristic]
 description: Allows users to have Badges in chat
+
 commands:
   badge:
     description: Opens the badge GUI or shows badge info.
@@ -13,8 +14,3 @@ commands:
     aliases: [badges]
     permission: badges.use
     tab-completer: com.seristic.badges.commands.BadgeCommandTabCompleter
-    subcommands:
-      delete:
-        description: Deletes a badge from a player.
-        usage: /badge delete <badgeName>
-        permission: badges.delete

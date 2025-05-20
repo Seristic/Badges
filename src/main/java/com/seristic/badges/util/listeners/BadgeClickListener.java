@@ -38,10 +38,8 @@ public class BadgeClickListener implements Listener {
 
         if (event.getClick() == ClickType.LEFT) {
             BadgeManager.setBadge(player, badgeName);
-            PluginLogger.warning(Badges.PREFIX + "DEBUG: Trying to equip badge: '" + badgeName + "'");
         } else if (event.getClick() == ClickType.RIGHT) {
             BadgeManager.removeBadge(player, badgeName);
-            PluginLogger.warning(Badges.PREFIX + "DEBUG: Trying to unequip badge: '" + badgeName + "'");
         }
     }
 }

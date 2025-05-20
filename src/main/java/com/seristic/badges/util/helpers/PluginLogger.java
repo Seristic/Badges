@@ -1,5 +1,6 @@
 package com.seristic.badges.util.helpers;
 
+import net.kyori.adventure.text.Component;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -135,8 +136,31 @@ public class PluginLogger {
                 builder.append(sw.toString());
             }
             return builder.toString();
+        }
+    }
+    public static void componentInfo(String prefix, Component component) {
+        StringBuilder readableFormat = new StringBuilder();
+        readableFormat.append("[").append(prefix).append("] ");
+        
+        if (component instanceof net.kyori.adventure.text.TextComponent) {
+            extractComponentInfo(component, readableFormat);
+        }
+        
+        logger.info(readableFormat.toString());
+    }
 
-
+    private static void extractComponentInfo(Component component, StringBuilder builder) {
+        if (component instanceof net.kyori.adventure.text.TextComponent textComponent) {
+            String content = textComponent.content();
+            if (!content.isEmpty()) {
+                builder.append(content);
+            }
+            
+            if (!textComponent.children().isEmpty()) {
+                for (Component child : textComponent.children()) {
+                    extractComponentInfo(child, builder);
+                }
+            }
         }
     }
 }
