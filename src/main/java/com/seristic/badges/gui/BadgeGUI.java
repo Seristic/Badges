@@ -1,6 +1,6 @@
 package com.seristic.badges.gui;
 
-import com.seristic.badges.util.Badge;
+import com.seristic.badges.Badges;
 import com.seristic.badges.util.ConfigManager;
 import com.seristic.badges.util.database.DatabaseManager;
 import com.seristic.badges.util.helpers.MessageUtil;
@@ -31,38 +31,35 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class BadgeGUI implements Listener, CommandExecutor {
 
     private final JavaPlugin plugin;
+    private final BukkitAudiences adventure;
 
     private final int guiSize = ConfigManager.getGuiSize();
     private final String guiTitle = ChatColor.translateAlternateColorCodes('&', ConfigManager.getGuiTitle());
     private final int nextPageSlot = ConfigManager.getNextPageSlot();
     private final int prevPageSlot = ConfigManager.getPrevPageSlot();
-    private final int maxPage = 4;
-    private final int minPage = 0;
     private final int badgesPerPage = ConfigManager.getBadgesPerPage();
     private final Sound applyBadgeSound = ConfigManager.getApplyBadgeSound();
     private final float applyBadgeVolume = ConfigManager.getApplyBadgeSoundVolume();
     private final float applyBadgePitch = ConfigManager.getApplyBadgeSoundPitch();
     private final ItemStack blackGlass = createGlassPane();
 
-    private final BukkitAudiences adventure;
-    private BadgeGUI badgeGUI;
-
-    public BadgeGUI(BukkitAudiences adventure, BadgeGUI badgeGUI, JavaPlugin plugin) {
+    public BadgeGUI(BukkitAudiences adventure, JavaPlugin plugin) {
         this.adventure = adventure;
         this.plugin = plugin;
-     }
+    }
 
     public void openBadgeGUI(Player player, List<ItemStack> badges, int page) {
-        if (page < minPage || page > maxPage) return;
+        int maxPage = (int) Math.ceil((double) badges.size() / badgesPerPage) - 1;
+        if (page < 0 || page > maxPage) return;
 
         Inventory gui = Bukkit.createInventory(null, guiSize, guiTitle + " (Page " + (page + 1) + ")");
 
+        // Fill borders with glass panes
         for (int i = 0; i < guiSize; i++) {
             if (i < 9 || i >= guiSize - 9 || i % 9 == 0 || i % 9 == 8) {
                 gui.setItem(i, blackGlass);
@@ -73,10 +70,22 @@ public class BadgeGUI implements Listener, CommandExecutor {
         int endIndex = Math.min(startIndex + badgesPerPage, badges.size());
 
         for (int i = startIndex, slot = 10; i < endIndex; i++, slot++) {
-            gui.setItem(slot, badges.get(i));
+            ItemStack badgeItem = badges.get(i);
+
+            // Clone the item to avoid modifying the original
+            badgeItem = badgeItem.clone();
+
+            ItemMeta meta = badgeItem.getItemMeta();
+            if (meta != null) {
+                NamespacedKey slotKey = new NamespacedKey(plugin, "badge_slot");
+                meta.getPersistentDataContainer().set(slotKey, PersistentDataType.INTEGER, slot);
+                badgeItem.setItemMeta(meta);
+            }
+
+            gui.setItem(slot, badgeItem);
         }
 
-        if (page > minPage) {
+        if (page > 0) {
             gui.setItem(prevPageSlot, createNavItem(ConfigManager.getPrevPageMaterial(), ConfigManager.getPrevPageName()));
         }
         if (page < maxPage) {
@@ -88,37 +97,41 @@ public class BadgeGUI implements Listener, CommandExecutor {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
+        int clickedSlot = event.getSlot();
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (event.getView().getTitle().startsWith(guiTitle)) {
             event.setCancelled(true);
             if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) return;
 
-            int currentPage = Math.max(minPage, Math.min(maxPage, Integer.parseInt(event.getView().getTitle().replaceAll("[^0-9]", "")) - 1));
-
-            if (event.getSlot() == nextPageSlot && currentPage < maxPage) {
-                openBadgeGUI(player, getBadges(player), currentPage + 1);
-                return;
-            } else if (event.getSlot() == prevPageSlot && currentPage > minPage) {
-                openBadgeGUI(player, getBadges(player), currentPage - 1);
-                return;
-            }
-
             ItemStack clickedItem = event.getCurrentItem();
             ItemMeta meta = clickedItem.getItemMeta();
-            if (meta != null && meta.hasLore() && !meta.getLore().isEmpty()) {
-                String chatIconLore = meta.getLore().getFirst();
-                String chatIcon = chatIconLore.replace("Chat Icon: ", "");
-                applyBadgeWithLuckPerms(player, chatIcon);
-            } else {
-                MessageUtil.send(player, Component.text("Could not apply this badge. (Missing chat icon)", NamedTextColor.RED));
+
+            if (meta != null) {
+                NamespacedKey nameKey = new NamespacedKey(plugin, "badge_name");
+                String badgeName = meta.getPersistentDataContainer().get(nameKey, PersistentDataType.STRING);
+
+                // Rest of your click handling code...
+                if (meta.getLore() != null) {
+                    for (String line : meta.getLore()) {
+                        if (line.startsWith("Chat Icon: [")) {
+                            String chatIcon = line.replace("Chat Icon: [", "").replace("]", "").trim();
+                            applyBadgeWithLuckPerms(player, chatIcon, event.getSlot());
+                            return;
+                        }
+                    }
+                }
             }
+
+            MessageUtil.send(player, Component.text("Could not apply this badge. (Missing badge data)", NamedTextColor.RED));
         }
     }
 
-    private void applyBadgeWithLuckPerms(Player player, String chatIcon) {
+
+    private void applyBadgeWithLuckPerms(Player player, String chatIcon, int clickedSlot) {
+        PluginLogger.info(Badges.PREFIX + chatIcon + " from slot: " + clickedSlot);
         player.playSound(player.getLocation(), applyBadgeSound, SoundCategory.MASTER, applyBadgeVolume, applyBadgePitch);
-        BadgeManager.setBadge(player, chatIcon);
+        BadgeManager.setBadge(player, chatIcon, clickedSlot);
     }
 
     private ItemStack createGlassPane() {
@@ -145,10 +158,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
         ItemStack badge = new ItemStack(Material.NAME_TAG);
         ItemMeta meta = badge.getItemMeta();
         if (meta != null) {
-            Component displayName = Component.text("Default Badge")
-                    .color(NamedTextColor.GRAY)
-                    .decorate(TextDecoration.BOLD);
-
+            Component displayName = Component.text("Default Badge", NamedTextColor.GRAY, TextDecoration.BOLD);
             meta.setDisplayName(GsonComponentSerializer.gson().serialize(displayName));
 
             List<String> lore = new ArrayList<>();
@@ -171,12 +181,11 @@ public class BadgeGUI implements Listener, CommandExecutor {
                 return badges;
             }
 
-            String query = "SELECT badge_name, chat_icon FROM badges";
-
-            try (PreparedStatement ps = connection.prepareStatement(query);
-                 ResultSet rs = ps.executeQuery()) {
+            String query = "SELECT badge_id, badge_name, chat_icon FROM badges";
+            try (PreparedStatement ps = connection.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
 
                 while (rs.next()) {
+                    String badgeId = rs.getString("badge_id");
                     String badgeName = rs.getString("badge_name");
                     String chatIcon = rs.getString("chat_icon");
 
@@ -184,36 +193,42 @@ public class BadgeGUI implements Listener, CommandExecutor {
 
                     Material iconMaterial;
                     try {
-                        iconMaterial = Material.valueOf(chatIcon.toUpperCase());
-                    } catch (IllegalArgumentException e) {
                         iconMaterial = Material.NAME_TAG;
+                    } catch (IllegalArgumentException e) {
+                        iconMaterial = Material.PAPER;
                     }
 
-                    Badge badge = new Badge(badgeName, badgeName, chatIcon.trim(), NamedTextColor.GOLD);
                     ItemStack badgeItem = new ItemStack(iconMaterial);
                     ItemMeta meta = badgeItem.getItemMeta();
 
                     if (meta != null) {
-                        meta.setDisplayName(badgeName);
+                        meta.setDisplayName(ChatColor.GOLD + badgeName);
+
                         List<String> lore = new ArrayList<>();
                         lore.add("Chat Icon: [ " + chatIcon.trim() + " ]");
+                        lore.add("Badge ID: " + badgeId);
                         lore.add("Click to Apply!");
                         meta.setLore(lore);
 
-                        NamespacedKey key = new NamespacedKey(plugin, "badge_name");
-                        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, badge.getName());
+                        NamespacedKey idKey = new NamespacedKey(plugin, "badge_id");
+                        meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, badgeId);
+
+                        NamespacedKey nameKey = new NamespacedKey(plugin, "badge_name");
+                        meta.getPersistentDataContainer().set(nameKey, PersistentDataType.STRING, badgeName);
 
                         meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
                         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
                         badgeItem.setItemMeta(meta);
                     }
+
                     badges.add(badgeItem);
                 }
             }
         } catch (SQLException e) {
-            badges.add(createDefaultBadge());
             PluginLogger.logException(null, e);
+            badges.add(createDefaultBadge());
         }
+
         return badges;
     }
 
@@ -236,6 +251,7 @@ public class BadgeGUI implements Listener, CommandExecutor {
             }
         } catch (SQLException e) {
             MessageUtil.send(player, Component.text("Error occurred while deleting the badge", NamedTextColor.RED));
+            PluginLogger.logException(null, e);
         }
     }
 

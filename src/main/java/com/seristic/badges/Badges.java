@@ -47,7 +47,7 @@ public final class Badges extends JavaPlugin {
 
         ConfigManager.setup(this);
 
-        this.badgeGUI = new BadgeGUI(adventure, null, this);
+        this.badgeGUI = new BadgeGUI(adventure, this);
         CommandHandler commandHandler = new CommandHandler(adventure, badgeGUI);
 
         // Initialize DatabaseManager using new init method
@@ -98,16 +98,3 @@ public final class Badges extends JavaPlugin {
         return badgeAPI;
     }
 }
-
-
-/**
- * UUID playerUUID = player.getUniqueId();
- *
- * // Get the plugin instance and then the API
- * BadgeAPI badgeAPI = Badges.getInstance().getBadgeAPI();
- *
- * Collection<Badge> activeBadges = badgeAPI.getActiveBadges(playerUUID);
- * Collection<Badge> allBadges = badgeAPI.getAllBadges(playerUUID);
- *
- * This is how I can use the api elsewhere in the code
- */
