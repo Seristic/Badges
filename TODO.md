@@ -44,3 +44,4 @@ This file contains the current development goals and improvements for the Badges
 
 ## 🐞 Known Bugs
 - [ ] Console confirmation message is being overwritten with the incorrect string from formatBadge `String actionText = "Unequipped badge: ";`
+- [ ] Breaks TownyChat
