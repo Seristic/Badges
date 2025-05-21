@@ -14,16 +14,15 @@ This file contains the current development goals and improvements for the Badges
 - [x] Hook permissions into badge access (e.g., only admins can give/share)
 - [x] Support multi-page GUI navigation for users with many badges
 - [x] Replace `e.printStackTrace();` with proper error logging custom made.
+- [x] Error handling + logging in database operations
 ---
 
 ## 🛠️ In Progress
 - [x] Dynamic tab completion for subcommands
-- [x] Error handling + logging in database operations
 - [x] Improve command dispatcher to fully decouple subcommands (e.g., delete, give, create)
 - [x] Proper permission checks for each command (e.g., `chatbadges.give`, `chatbadges.create`)
-- [ ] Add config options for GUI customization (title, colors, layout)
+- [x] Add config options for GUI customization (title, colors, layout)
 - [x] Hover tooltips in GUI showing who created the badge
-- [x] Add badge preview tooltips showing description, icon, and owner
 ## 🧠 Future Features
 - [ ] Badge categories (e.g., earned, seasonal, group)
 - [ ] JSON-based badge import/export system
