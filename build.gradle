@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.seristic'
-version = '1.0'
+version = project.badgesVersion
 
 repositories {
     mavenCentral()

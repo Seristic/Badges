@@ -1,5 +1,5 @@
 name: Badges
-version: '1.0'
+version: ${version}
 main: com.seristic.badges.Badges
 api-version: '1.21'
 prefix: Badges
