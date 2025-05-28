@@ -37,7 +37,7 @@ public final class BadgeHelper {
                         NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
                         if (color == null) color = NamedTextColor.WHITE;
 
-                        return new Badge(id, name, chatIcon, color);
+                        return new Badge(id, name, chatIcon, color, false, false);
                     }
                 }
             }
@@ -48,18 +48,15 @@ public final class BadgeHelper {
     }
 
     public static Component formatBadgeMessage(String actionPrefix, Badge badge) {
-        String prefixLegacy = LegacyComponentSerializer.legacySection().serialize(Badges.PREFIX);
-        String actionText = "Unequipped badge: ";
+        // Log only the plain string to the console (single prefix)
+        String actionText = actionPrefix + badge.getName() + " (" + badge.getChatIcon() + ")";
+        PluginLogger.info(actionText);
 
-
-        Component message = Component.empty()
+        // Return the Adventure component for player messages (with prefix)
+        return Component.empty()
                 .append(Badges.PREFIX)
                 .append(Component.text(actionPrefix).color(NamedTextColor.WHITE))
-                .append(Component.text(" ")) // add a space before badge icon
+                .append(Component.text(" "))
                 .append(Component.text(badge.getChatIcon()).color(badge.getColor()));
-
-        PluginLogger.warning(prefixLegacy + actionText + badge.getName() + " (" + badge.getChatIcon() + ")");
-
-        return message;
     }
 }

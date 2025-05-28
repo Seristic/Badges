@@ -24,7 +24,7 @@ public class BadgeAPIImpl implements BadgeAPI {
             if (connection == null || connection.isClosed()) return badges;
 
             String sql = """
-                SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color
+                SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color, b.requires_permission, b.is_hidden, b.badge_group
                 FROM badges b
                 JOIN player_active_badges pab ON b.badge_id = pab.badge_id
                 WHERE pab.player_uuid = ?
@@ -51,12 +51,11 @@ public class BadgeAPIImpl implements BadgeAPI {
             if (connection == null || connection.isClosed()) return badges;
 
             String sql = """
-                SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color
+                SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color, b.requires_permission, b.is_hidden, b.badge_group
                 FROM badges b
                 JOIN player_badges pob ON b.badge_id = pob.badge_id
                 WHERE pob.uuid = ?
             """;
-
 
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setString(1, playerUUID.toString());
@@ -81,6 +80,11 @@ public class BadgeAPIImpl implements BadgeAPI {
         NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
         if (color == null) color = NamedTextColor.WHITE;
 
-        return new Badge(id, name, chatIcon, color);
+        boolean requiresPermission = rs.getBoolean("requires_permission");
+        boolean isHidden = rs.getBoolean("is_hidden");
+
+        String group = rs.getString("badge_group");
+
+        return new Badge(id, name, chatIcon, color, false, false);
     }
 }

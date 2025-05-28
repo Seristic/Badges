@@ -144,7 +144,7 @@ public class BadgeCreateCommand extends BadgeSubCommand {
 
                 MessageUtil.send(sender, Component.text("Badge '" + badgeName + "' created successfully.", NamedTextColor.GREEN));
                 badgeGUI.openBadgeGUI(player, badgeGUI.getBadges(player), 0);
-                PluginLogger.info(Badges.PREFIX + "Badge '" + badgeName + "' created by " + player.getName());
+                PluginLogger.info("[Badges] Badge '" + badgeName + "' created by " + player.getName());
             }
         } catch (SQLException e) {
             MessageUtil.send(sender, Component.text("Failed to insert badge into the database.", NamedTextColor.RED));

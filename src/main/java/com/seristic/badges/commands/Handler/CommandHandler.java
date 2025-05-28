@@ -1,114 +1,62 @@
 package com.seristic.badges.commands.Handler;
 
+import com.seristic.badges.gui.BadgeGUI;
 import com.seristic.badges.commands.BadgeCreateCommand;
 import com.seristic.badges.commands.BadgeDeleteCommand;
-import com.seristic.badges.commands.BadgeGUICommand;
-import com.seristic.badges.gui.BadgeGUI;
 import com.seristic.badges.util.helpers.MessageUtil;
-import com.seristic.badges.util.helpers.PluginLogger;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.command.*;
-import org.jetbrains.annotations.NotNull;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class CommandHandler implements CommandExecutor, TabCompleter {
+public class CommandHandler implements CommandExecutor {
 
-    private final Map<String, BadgeSubCommand> subCommands = new HashMap<>();
-    private final BukkitAudiences adventure;
+    private final List<BadgeSubCommand> subCommands = new ArrayList<>();
     private final BadgeGUI badgeGUI;
 
     public CommandHandler(BukkitAudiences adventure, BadgeGUI badgeGUI) {
-        this.adventure = adventure;
         this.badgeGUI = badgeGUI;
-
-        // Register all subcommands here
-        register(new BadgeGUICommand(badgeGUI));         // This becomes the default GUI command
-        register(new BadgeCreateCommand(badgeGUI));      // This handles creation
-        register(new BadgeDeleteCommand(badgeGUI));      // This handles deletion
-    }
-
-    public void register(BadgeSubCommand cmd) {
-        subCommands.put(cmd.getName().toLowerCase(), cmd);
-        for (String alias : cmd.getAliases()) {
-            subCommands.put(alias.toLowerCase(), cmd);
-        }
+        // Register your subcommands here:
+        subCommands.add(new BadgeCreateCommand(badgeGUI));
+        subCommands.add(new BadgeDeleteCommand(badgeGUI));
+        // add others as needed...
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            MessageUtil.send(sender, Component.text("Only players can use this command.", NamedTextColor. RED));
+            return true;
+        }
+
         if (args.length == 0) {
-            // Try to find the default subcommand (one with empty string name)
-            BadgeSubCommand defaultCmd = subCommands.get("");
-            if (defaultCmd != null) {
-                if (!defaultCmd.hasPermission(sender)) {
-                    MessageUtil.send(sender, Component.text("You do not have permission to use this command.", NamedTextColor.RED));
-                    return true;
-                }
+            badgeGUI.openBadgeGUI(player, badgeGUI.getBadges(player), 0);
+            return true;
+        }
 
-                try {
-                    defaultCmd.execute(sender, new String[0]);
-                } catch (Exception e) {
-                    MessageUtil.send(sender, Component.text("An error occurred while executing the command.", NamedTextColor.RED));
-                    PluginLogger.logException(null, e);
-                }
+        String subCommandName = args[0].toLowerCase();
 
+        for (BadgeSubCommand subCommand : subCommands) {
+            if (subCommand.getName().equalsIgnoreCase(subCommandName) ||
+                    subCommand.getAliases().contains(subCommandName)) {
+
+                // Pass subcommand args WITHOUT the subcommand itself
+                // i.e., args[1..] to subcommand.execute
+                String[] subArgs = new String[args.length - 1];
+                System.arraycopy(args, 1, subArgs, 0, args.length - 1);
+
+                subCommand.execute(sender, subArgs);
                 return true;
             }
-
-            MessageUtil.send(sender, Component.text("No default command is set for /" + label, NamedTextColor.RED));
-            return true;
         }
 
-        BadgeSubCommand sub = subCommands.get(args[0].toLowerCase());
-        if (sub == null) {
-            MessageUtil.send(sender, Component.text("Unknown subcommand. Use '/" + label + " help' for a list of subcommands.", NamedTextColor.RED));
-            return true;
-        }
-
-        if (!sub.hasPermission(sender)) {
-            MessageUtil.send(sender, Component.text("You do not have permission to use this command.", NamedTextColor.RED));
-            return true;
-        }
-
-        try {
-            sub.execute(sender, Arrays.copyOfRange(args, 1, args.length));
-        } catch (Exception e) {
-            MessageUtil.send(sender, Component.text("An error occurred while executing the command.", NamedTextColor.RED));
-            PluginLogger.logException(null, e);
-        }
-
+        sender.sendMessage("Unknown subcommand. Use /badge help");
         return true;
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) {
-            String input = args[0].toLowerCase();
-            Set<String> completions = new HashSet<>();
-            for (Map.Entry<String, BadgeSubCommand> entry : subCommands.entrySet()) {
-                if (entry.getKey().startsWith(input)) {
-                    BadgeSubCommand sub = entry.getValue();
-                    if (sub.hasPermission(sender)) {
-                        completions.add(sub.getName()); // Only include main name
-                    }
-                }
-            }
-            return new ArrayList<>(completions);
-        }
-
-        // Pass tab completion responsibility to the subcommand if needed
-        BadgeSubCommand sub = subCommands.get(args[0].toLowerCase());
-        if (sub != null && sub instanceof TabCompleter) {
-            return ((TabCompleter) sub).onTabComplete(sender, command, alias, Arrays.copyOfRange(args, 1, args.length));
-        }
-
-        return Collections.emptyList();
-    }
-
-    public Collection<BadgeSubCommand> getSubCommands() {
-        return new HashSet<>(subCommands.values());
     }
 }

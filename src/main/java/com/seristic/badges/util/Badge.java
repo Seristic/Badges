@@ -17,6 +17,8 @@ public class Badge {
     private final String name;
     private final String chatIcon;
     private final NamedTextColor color;
+    private boolean requiredPermission;
+    private boolean isHidden;
 
     /**
      * Constructs a Badge instance.
@@ -26,11 +28,13 @@ public class Badge {
      * @param chatIcon  Symbol shown in chat.
      * @param color     Display color for the badge.
      */
-    public Badge(String id, String name, String chatIcon, NamedTextColor color) {
+    public Badge(String id, String name, String chatIcon, NamedTextColor color, boolean requiredPermission, boolean isHidden) {
         this.id = id;
         this.name = name;
         this.chatIcon = chatIcon;
         this.color = color != null ? color : NamedTextColor.WHITE;
+        this.requiredPermission = requiredPermission;
+        this.isHidden = isHidden;
     }
 
     public String getId() {
@@ -47,6 +51,13 @@ public class Badge {
 
     public NamedTextColor getColor() {
         return color;
+    }
+
+    public boolean getRequiredPermission() {
+        return requiredPermission;
+    }
+    public boolean isHidden() {
+        return isHidden;
     }
 
     /**

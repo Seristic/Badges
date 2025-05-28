@@ -204,7 +204,7 @@ public class DatabaseManager {
                     NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
                     if (color == null) color = NamedTextColor.WHITE;
 
-                    badges.add(new Badge(id, name, chatIcon, color));
+                    badges.add(new Badge(id, name, chatIcon, color, false, false));
                 }
             }
 
@@ -242,7 +242,7 @@ public class DatabaseManager {
                     NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
                     if (color == null) color = NamedTextColor.WHITE;
 
-                    badges.add(new Badge(id, name, chatIcon, color));
+                    badges.add(new Badge(id, name, chatIcon, color, false, false));
                 }
             }
 
@@ -279,7 +279,7 @@ public class DatabaseManager {
                     NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
                     if (color == null) color = NamedTextColor.WHITE;
 
-                    return new Badge(id, name, chatIcon, color);
+                    return new Badge(id, name, chatIcon, color, false, false);
                 }
             }
         } catch (SQLException e) {

@@ -1,5 +1,6 @@
 package com.seristic.badges.util.listeners;
 
+import com.seristic.badges.Badges;
 import com.seristic.badges.gui.BadgeManager;
 import com.seristic.badges.util.Badge;
 import com.seristic.badges.util.helpers.MessageUtil;
@@ -7,6 +8,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class ChatBadgeListener implements Listener {
         var player = event.getPlayer();
         String message = event.getMessage();
 
-        List<Badge> badges = BadgeManager.getBadges(player);
+        List<Badge> badges = BadgeManager.getBadgesForPlayer(player);
 
         Component badgesComponent = Component.empty();
 

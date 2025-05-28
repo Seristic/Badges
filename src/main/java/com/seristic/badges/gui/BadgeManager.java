@@ -31,6 +31,12 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class BadgeManager {
+    private final JavaPlugin plugin;
+
+    public BadgeManager(JavaPlugin plugin) {
+        this.plugin = plugin;
+    }
+
     private static final Map<UUID, List<String>> activeBadges = new HashMap<>();
     private static final Map<String, Badge> badges = new HashMap<>();
 
@@ -65,19 +71,19 @@ public class BadgeManager {
 //    }
 
     public static void setBadge(Player player, String badgeName, int clickedSlot) {
-        PluginLogger.info(Badges.PREFIX + "setBadge called with badgeName='" + badgeName + "'");
         try (Connection connection = DatabaseManager.getConnection()) {
             if (connection == null || connection.isClosed()) {
                 MessageUtil.send(player, Component.text("Database connection failed.", NamedTextColor.RED));
                 return;
             }
 
-            String badgeQuery = "SELECT badge_id, badge_name, chat_icon, badge_color FROM badges WHERE LOWER(TRIM(badge_name)) = LOWER(TRIM(?))";
+            String badgeQuery = "SELECT badge_id, badge_name, chat_icon, badge_color, requires_permission FROM badges WHERE LOWER(TRIM(badge_name)) = LOWER(TRIM(?))";
 
             int badgeId;
             String chatIcon;
             String realName;
             NamedTextColor color;
+            boolean requiresPermission;
 
             try (PreparedStatement badgeCheck = connection.prepareStatement(badgeQuery)) {
                 badgeCheck.setString(1, badgeName.trim().toLowerCase(Locale.ROOT));
@@ -91,18 +97,27 @@ public class BadgeManager {
                     chatIcon = rs.getString("chat_icon");
                     realName = rs.getString("badge_name");
                     String colorStr = rs.getString("badge_color");
+                    requiresPermission = rs.getBoolean("requires_permission");
                     color = ColourUtil.getNamedTextColor(colorStr);
                     if (color == null) color = NamedTextColor.WHITE;
-                    Bukkit.getLogger().info("Found badge: ID=" + badgeId + ", Name=" + realName + ", Icon=" + chatIcon + ", Color=" + colorStr);
+                    Bukkit.getLogger().info("Found badge: ID=" + badgeId + ", Name=" + realName + ", Icon=" + chatIcon + ", Color=" + colorStr + ", requiresPermission=" + requiresPermission);
                 }
             }
 
             Badge badge = new Badge(
-                    String.valueOf(badgeId), // badgeId is int, store as string for Badge object
+                    String.valueOf(badgeId),
                     realName,
                     chatIcon,
-                    color
+                    color,
+                    requiresPermission,
+                    false
             );
+
+            // Permission check:
+            if (requiresPermission && !player.hasPermission("badges.use." + badgeName.toLowerCase().replace(" ", "_"))) {
+                MessageUtil.send(player, Component.text("You do not have permission to equip this badge.", NamedTextColor.RED));
+                return;
+            }
 
             // Check if the player already has this badge equipped
             String checkQuery = "SELECT 1 FROM player_badges WHERE uuid = ? AND badge_id = ?";
@@ -126,43 +141,6 @@ public class BadgeManager {
             PluginLogger.logException("Error equipping badge for " + player.getName(), e);
             MessageUtil.send(player, Component.text(Badges.PREFIX + "An error occurred while equipping the badge.", NamedTextColor.RED));
         }
-    }
-
-    public static List<Badge> getBadges(Player player) {
-        List<Badge> badges = new ArrayList<>();
-
-        try (Connection connection = DatabaseManager.getConnection()) {
-            if (connection == null) return badges;
-
-            String sql = """
-            SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color
-            FROM player_badges pb
-            JOIN badges b ON pb.badge_id = b.badge_id
-            WHERE pb.uuid = ? AND pb.is_active = TRUE
-        """;
-
-            try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                ps.setString(1, player.getUniqueId().toString());
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        String id = rs.getString("badge_id");
-                        String name = rs.getString("badge_name");
-                        String chatIcon = rs.getString("chat_icon");
-                        String colorStr = rs.getString("badge_color");
-
-                        NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
-                        if (color == null) color = NamedTextColor.WHITE;
-
-                        badges.add(new Badge(id, name, chatIcon, color));
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            PluginLogger.severe("Failed to load active badges: " + e.getMessage());
-        }
-
-        return badges;
     }
 
     public static void clearBadge(Player player) {
@@ -260,6 +238,7 @@ public class BadgeManager {
             String sql = """
             SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color
             FROM player_badges pb
+            FROM player_badges pb
             JOIN badges b ON pb.badge_id = b.badge_id
             WHERE pb.uuid = ? AND pb.is_active = TRUE
         """;
@@ -313,6 +292,42 @@ public class BadgeManager {
         }
 
         return items;
+    }
+
+    public static List<Badge> getBadgesForPlayer(Player player) {
+        List<Badge> badgeList = new ArrayList<>();
+        try (Connection connection = DatabaseManager.getConnection()) {
+            if (connection == null) return badgeList;
+
+            String sql = """
+            SELECT b.badge_id, b.badge_name, b.chat_icon, b.badge_color
+            FROM player_badges pb
+            JOIN badges b ON pb.badge_id = b.badge_id
+            WHERE pb.uuid = ? AND pb.is_active = TRUE
+            """;
+
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, player.getUniqueId().toString());
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String badgeId = rs.getString("badge_id");
+                        String badgeName = rs.getString("badge_name");
+                        String chatIcon = rs.getString("chat_icon");
+                        String colorStr = rs.getString("badge_color");
+
+                        NamedTextColor color = ColourUtil.getNamedTextColor(colorStr);
+                        if (color == null) color = NamedTextColor.WHITE;
+
+                        Badge badge = new Badge(badgeId, badgeName, chatIcon, color, false, false);
+                        badgeList.add(badge);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            PluginLogger.severe("Failed to load badges for player: " + e.getMessage());
+        }
+        return badgeList;
     }
 
     public static boolean isDefaultBadge(String badgeIcon) {

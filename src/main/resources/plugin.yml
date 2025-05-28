@@ -4,13 +4,24 @@ main: com.seristic.badges.Badges
 api-version: '1.21'
 prefix: Badges
 load: STARTUP
-authors: [Seristic]
+authors:
+  - Seristic
 description: Allows users to have Badges in chat
 
 commands:
   badge:
     description: Opens the badge GUI or shows badge info.
     usage: /<command> <subcommand>
-    aliases: [badges]
+    aliases:
+      - badges
     permission: badges.use
     tab-completer: com.seristic.badges.commands.BadgeCommandTabCompleter
+
+permissions:
+  badges.use:
+    description: Allows use of badge commands.
+    default: true
+
+  badges.admin:
+    description: Allows admin commands for badges like create and delete.
+    default: op
